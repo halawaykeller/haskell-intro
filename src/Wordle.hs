@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 -- {-# LANGUAGE OverloadedStrings #-}
 
 module Wordle
@@ -33,23 +34,14 @@ import qualified Data.Char as C
 data WordleGame = WordleGame {
     isMatch :: Bool,
     attempts:: Int,
-    previousGuesses :: [GuessedLetters]
+    previousGuesses :: [GuessedLetter]
 } deriving (Show, Read, Eq)
 
-data GuessedLetters = GuessedLetters {
+data GuessedLetter = GuessedLetter {
     letter :: Char,
-    position :: Int,
     correctLetter :: Bool,
     correctPosition :: Bool
 } deriving (Show, Read, Eq)
-
--- shift -- correct word
--- spice -- guess
--- raspy -- guess
-
--- [(s, s), (h, p), (i, i), (f, c), (t, e)]
--- checks position 
--- [(s, r), (h, a), (i, s), (f, y), (t, y)]
 
 
 wordle :: IO ()
@@ -62,7 +54,7 @@ wordle = do
     print $ makeGuess "Child"
 
 -- | Constants
-wordOfTheDay :: Int 
+wordOfTheDay :: Int
 wordOfTheDay = 50
 
 -- | Accesssing an Array
@@ -77,28 +69,33 @@ getWordOfTheDay i = cycle dictionary !! max 0 i
 -- Some text processing, all the words in our dictionary are upper case ¯\_(ツ)_/¯
 -- Weird choice, but that's what I copied from the internet
 -- This is annoying so let's lower case all those strings
--- Note the eta reduction
-processedDictionary :: [String] 
-processedDictionary = map (map C.toLower) dictionary 
+processedDictionary :: [String]
+processedDictionary = map (map C.toLower) dictionary
 
 isGuessRealWord :: String -> Bool
-isGuessRealWord guess = guess `elem` processedDictionary 
+isGuessRealWord guess = guess `elem` processedDictionary
 
 -- | Game Functions
 
 makeGuess :: String -> Maybe WordleGame
 makeGuess guess = undefined
 
-checkGuessedLetters :: String -> String -> [GuessedLetters]
-checkGuessedLetters guess word = undefined 
-    
+checkGuessedLetters :: String -> String -> [GuessedLetter]
+checkGuessedLetters guess word = 
+    map (mkGuessedLetter word) (checkPositions guess word)
+    where
+        mkGuessedLetter :: String -> (Char, Bool) -> GuessedLetter
+        mkGuessedLetter word (letter, correctPos)
+            | correctPos = GuessedLetter letter True True
+            | not correctPos = GuessedLetter letter (checkMembership letter word) False
+
 checkMembership :: Char -> String -> Bool
 checkMembership letter word = letter `elem` word
 
 -- Look at this linter suggestion and take it apart
 checkPositions :: String -> String -> [(Char, Bool)]
 checkPositions guess word = zip guess isCorrectPosition
-    where 
+    where
         -- Where clauses are locally scoped functions
         -- But they can take their arguments from the function they are scoped within
         isCorrectPosition :: [Bool]
